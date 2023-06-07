@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using LitJson;
+using System;
 
 public class DAO : MonoBehaviour
 {
@@ -62,17 +63,33 @@ public class DAO : MonoBehaviour
         parameters.width = 30;  // 同上
         // WWWForm form = new WWWForm ();
         // form.AddField ("parameter", JsonMapper.ToJson(parameters));
-        UnityWebRequest save = new UnityWebRequest(serverAddress, JsonMapper.ToJson(parameters));
+        UnityWebRequest request = new UnityWebRequest(serverAddress, JsonMapper.ToJson(parameters));
+        // タイムアウトの処理を追加する
+        // ***
+        Debug.Log(request.result);
+        if(request.result == UnityWebRequest.Result.ProtocolError) {
+            // レスポンスコードを見て処理
+            Debug.Log($"[Error]Response Code : {request.responseCode}");
+        }
+        else if (request.result == UnityWebRequest.Result.ConnectionError) {
+            // エラーメッセージを見て処理
+            Debug.Log($"[Error]Message : {request.error}");
+        }
+        else{
+            // 成功したときの処理
+            Debug.Log($"[Success]");
+        }
 
-        yield return save;
+        yield return request;
+
     }
 }
 
 [System.Serializable]
-public class Parameters : MonoBehaviour
+public class Parameters
 {
     public int id;
-    // public string name;
+    public string name;
     public int height;
     public int width;
 }
