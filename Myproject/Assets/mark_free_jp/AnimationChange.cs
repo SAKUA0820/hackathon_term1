@@ -10,7 +10,9 @@ public class AnimationChange : MonoBehaviour{
     
     // Start is called before the first frame update
     void Start(){
-        
+        eatingButton = GameObject.Find("EatButton");
+        exercisingButton = GameObject.Find("ExercisingButton");
+        mark = GameObject.Find("mark_free_t04");
     }
 
     // Update is called once per frame
@@ -33,5 +35,13 @@ public class AnimationChange : MonoBehaviour{
         int trans = animator.GetInteger("trans");
         //intパラメーターの値を設定する.
         animator.SetInteger("trans", 1);
+    }
+
+    public void Motion (int trans) {
+        //GetComponentを用いてAnimatorコンポーネントを取り出す.
+        Animator animator = mark.GetComponent<Animator>();
+    
+        //intパラメーターの値を設定する.
+        animator.SetInteger("trans", trans);
     }
 }

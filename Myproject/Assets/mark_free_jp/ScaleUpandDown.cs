@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ScaleUpandDown : MonoBehaviour
 {
     public GameObject eatingButton;//食事ボタン
     public GameObject exercisingButton;// 運動ボタン
     public GameObject mark;// マーク
+    public InputField eatingInput; // 入力フィールド
+    // public GameObject text1;
     private float scale; //拡大率
     private float x;// X座標
     private float y;// Y座標
@@ -15,6 +18,14 @@ public class ScaleUpandDown : MonoBehaviour
     private int countScale;
     
     void Start(){
+        eatingButton = GameObject.Find("EatButton");
+        exercisingButton = GameObject.Find("ExercisingButton");
+        mark = GameObject.Find("mark_free_t04");
+        eatingInput = GameObject.Find("EatingInput").GetComponent<InputField>();
+        // inputField = GameObject.Find("input").GetComponent<InputField>();
+        // inputField = inputField.GetComponent<InputField> ();
+        // inputField = GameObject.Find("InputField");
+        // text1 = GameObject.Find("Text1");
         isExercising = false;
     }
     
@@ -45,12 +56,12 @@ public class ScaleUpandDown : MonoBehaviour
     }
 
     public void ScaleUp(){
+        Debug.Log(eatingInput.text);
         isExercising = false;
         scale = mark.transform.localScale.x;
-        if(scale < 500f){
-            scale += 10f;
-            mark.transform.localScale = new Vector3(scale, scale, 0);
-        }
+    
+        scale = float.Parse(eatingInput.text);
+        mark.transform.localScale = new Vector3(scale, scale, 0);
     }
     
     public void ScaleDown(){       
@@ -69,5 +80,9 @@ public class ScaleUpandDown : MonoBehaviour
             mark.transform.localPosition = new Vector3(x, y, 0);
         }
         **/
+    }
+
+    public void EatInput () {
+        Debug.Log(eatingInput.text);
     }
 }
