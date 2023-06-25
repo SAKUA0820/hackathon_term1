@@ -13,8 +13,8 @@
 
 define('DB_DATABASE', 'hackathon1');
 define('DB_USERNAME', 'root');
-// define('DB_PASSWORD', 'hackathon1');
-define('DB_PASSWORD', 'nemui');  //←高橋自宅の場合
+define('DB_PASSWORD', 'hackathon1');
+// define('DB_PASSWORD', 'nemui');  //←高橋自宅の場合
 define('PDO_DSN', 'mysql:dbhost=localhost;dbname='.DB_DATABASE);
 
 // ////
