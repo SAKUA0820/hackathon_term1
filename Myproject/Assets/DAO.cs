@@ -56,40 +56,64 @@ public class DAO : MonoBehaviour
     * データを保存.
     */
     IEnumerator SaveData() {
-        Parameters parameters = new Parameters ();
-        parameters.id = 1;
-        parameters.name = "Mark1";
-        parameters.height = 30; // ボタン押下時のマーク君のサイズを取得するように変更する
-        parameters.width = 30;  // 同上
-        // WWWForm form = new WWWForm ();
-        // form.AddField ("parameter", JsonMapper.ToJson(parameters));
-        UnityWebRequest request = new UnityWebRequest(serverAddress, JsonMapper.ToJson(parameters));
-        // タイムアウトの処理を追加する
-        // ***
-        Debug.Log(request.result);
+        MarkData markData = new MarkData ();
+        markData.id = 1;
+        markData.width = 30;  // ボタン押下時のマーク君のサイズを取得するように変更する
+        markData.height = 30; // 同上
+        markData.anger_point = 5;
+        markData.burst_flag = false;
+        SendJsonData(markData);
+
+        AngerData angerData = new AngerData();
+        angerData.id = 1;
+        angerData.mark_table_id = 1;
+        angerData.comment = "残業してもタスクが終わらなくてイライラいする！！！";
+        angerData.anger_point = 2;
+        SendJsonData(angerData);
+
+        yield return 0;
+
+    }
+    
+    /**
+    * JSON形式でデータをPHPに送る.
+    */
+    public void SendJsonData<T>(T data) {
+        UnityWebRequest request = new UnityWebRequest(serverAddress, JsonMapper.ToJson(data));
+        // request.timeout = 1;
+        string dataName = data.GetType().Name;
         if(request.result == UnityWebRequest.Result.ProtocolError) {
             // レスポンスコードを見て処理
-            Debug.Log($"[Error]Response Code : {request.responseCode}");
+            Debug.Log($"[Error] Failed to send "+dataName+". Response Code : {request.responseCode}");
         }
         else if (request.result == UnityWebRequest.Result.ConnectionError) {
             // エラーメッセージを見て処理
-            Debug.Log($"[Error]Message : {request.error}");
+            Debug.Log($"[Error] Failed to send "+dataName+". Message : {request.error}");
         }
         else{
-            // 成功したときの処理
-            Debug.Log($"[Success]");
+            // データ送信処理実行
+            Debug.Log($"[Progress] Sending "+dataName+"...");
         }
-
-        yield return request;
-
     }
 }
 
 [System.Serializable]
-public class Parameters
+public class MarkData
 {
     public int id;
-    public string name;
-    public int height;
+    public DateTime create_at;
     public int width;
+    public int height;
+    public int anger_point;
+    public bool burst_flag;
+}
+
+[System.Serializable]
+public class AngerData
+{
+    public int id;
+    public DateTime create_at;
+    public int mark_table_id;
+    public string comment;
+    public int anger_point;
 }
