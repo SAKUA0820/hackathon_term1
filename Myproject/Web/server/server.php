@@ -66,15 +66,21 @@ define('PDO_DSN', 'mysql:dbhost=localhost;dbname='.DB_DATABASE);
 // $postTest = CheckPostJson('test');
 // header('Content-type:application/json');
 
-// json受け取り
-$json = file_get_contents('php://input');
-
-// レスポンスに送られてきたjson返す
-header("Access-Control-Allow-Origin: *");
-echo $json;
-
-$params = json_decode($json, true);
-print_r($params[0]['method']);
+try{
+    // json受け取り
+    $json = file_get_contents("php://input");
+    // 第4引数: エラー発生時に、JSONExceptionとする設定
+    $params = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+}catch(JSONException $e){
+    // ステータスコードの設定
+    header("HTTP/1.1 400 Bad Request");
+    // Content-Typeの設定
+    header("Content-Type: application/json; charset=utf-8");
+    // レスポンスボディにエラーの詳細を記載
+    $result = array('code'=>400, 'message'=>'リクエストデータの形式が正しくありません','description'=>$e->getMessage());
+    echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // DBアクセス 
     try {
@@ -88,7 +94,11 @@ print_r($params[0]['method']);
             $stmt->execute();
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            var_dump($result);
+            // var_dump($result);
+
+            header("HTTP/1.1 200 OK");
+            header("Content-Type: application/json; charset=utf-8");
+            echo json_encode($result, JSON_UNESCAPED_UNICODE);
 
             return;
         }
@@ -101,7 +111,11 @@ print_r($params[0]['method']);
             $stmt->execute();
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            var_dump($result);
+            // var_dump($result);
+
+            header("HTTP/1.1 200 OK");
+            header("Content-Type: application/json; charset=utf-8");
+            echo json_encode($result, JSON_UNESCAPED_UNICODE);
 
             return;
         }
@@ -113,7 +127,11 @@ print_r($params[0]['method']);
             $stmt->execute();
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            var_dump($result);
+            // var_dump($result);
+
+            header("HTTP/1.1 200 OK");
+            header("Content-Type: application/json; charset=utf-8");
+            echo json_encode($result, JSON_UNESCAPED_UNICODE);
 
             return;
         }
@@ -127,7 +145,11 @@ print_r($params[0]['method']);
             $stmt->execute();
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            var_dump($result);
+            // var_dump($result);
+
+            header("HTTP/1.1 200 OK");
+            header("Content-Type: application/json; charset=utf-8");
+            echo json_encode($result, JSON_UNESCAPED_UNICODE);
 
             return;
         }
@@ -142,7 +164,11 @@ print_r($params[0]['method']);
             $stmt->execute();
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            var_dump($result);
+            // var_dump($result);
+
+            header("HTTP/1.1 200 OK");
+            header("Content-Type: application/json; charset=utf-8");
+            echo json_encode($result, JSON_UNESCAPED_UNICODE);
 
             return;
         }
@@ -159,7 +185,11 @@ print_r($params[0]['method']);
             $stmt->execute();
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            var_dump($result);
+            // var_dump($result);
+
+            header("HTTP/1.1 200 OK");
+            header("Content-Type: application/json; charset=utf-8");
+            echo json_encode($result, JSON_UNESCAPED_UNICODE);
 
             return;
         }
