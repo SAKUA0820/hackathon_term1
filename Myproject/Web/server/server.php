@@ -17,66 +17,15 @@ define('DB_PASSWORD', 'hackathon1');
 // define('DB_PASSWORD', 'nemui');  //←高橋自宅の場合
 define('PDO_DSN', 'mysql:dbhost=localhost;dbname='.DB_DATABASE);
 
-// ////
-// // POST
-// function CheckPostNumeric($key) {
-//     if (is_numeric($_POST[$key])) {
-//         return (int)$_POST[$key];
-//     }
-//     return 0;
-// }
-
-// function CheckPostString($key) {
-//     if (is_string($_POST[$key])) {
-//         return $_POST[$key];
-//     }
-//     return "";
-// }
-
-// function CheckPostJson($key) {
-//     if (is_string($key)) {
-//         return json_decode($_POST[$key]);
-//     }
-//     return null;
-// }
-
-// ////
-// // JSON
-// function CheckJsonNumeric($val) {
-//     if (is_numeric($val)) {
-//         return (int)$val;
-//     }
-//     return 0;
-// }
-
-// function CheckJsonString($str) {
-//     if (is_string($str)) {
-//         return $str;
-//     }
-//     return "";
-// }
-// ////
-// class Test {
-//     public function ToJson() {
-//         $this->name = CheckJsonString($this->name);
-//         $this->value = CheckJsonNumeric($this->value);
-//         return json_encode($this);
-//     }
-// }
-// $postTest = CheckPostJson('test');
-// header('Content-type:application/json');
-
 try{
     // json受け取り
     $json = file_get_contents("php://input");
     // 第4引数: エラー発生時に、JSONExceptionとする設定
     $params = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 }catch(JSONException $e){
-    // ステータスコードの設定
+    // リクエストの形式がおかしい時
     header("HTTP/1.1 400 Bad Request");
-    // Content-Typeの設定
     header("Content-Type: application/json; charset=utf-8");
-    // レスポンスボディにエラーの詳細を記載
     $result = array('code'=>400, 'message'=>'リクエストデータの形式が正しくありません','description'=>$e->getMessage());
     echo json_encode($result, JSON_UNESCAPED_UNICODE);
     exit;
@@ -88,7 +37,6 @@ try{
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // selectAllMark (送られてきたjsonのmethodの値がselectAllMarkだった場合)
-        // TODO: 返すレスポンス返す形式合わせる
         if($params[0]['method'] == 'selectAllMark') {
             $stmt = $db->prepare("select * from mark_list");
             $stmt->execute();
@@ -104,7 +52,6 @@ try{
         }
 
         // selectMark (送られてきたjsonのmethodの値がselectMarkだった場合)
-        // TODO: 返すレスポンス返す形式合わせる
         if($params[0]['method'] == 'selectMark') {
             $stmt = $db->prepare("select * from mark_list where id = :id");
             $stmt->bindValue(':id', $params[0]['id'], PDO::PARAM_INT);
@@ -121,7 +68,6 @@ try{
         }
 
         // selectAllComment (送られてきたjsonのmethodの値がselectAllCommentだった場合)
-        // TODO: 返すレスポンス返す形式合わせる
         if($params[0]['method'] == 'selectAllComment') {
             $stmt = $db->prepare("select * from irritation_history");
             $stmt->execute();
@@ -137,7 +83,6 @@ try{
         }
 
         // insertMark (送られてきたjsonのmethodの値がselectAllCommentだった場合)
-        // TODO: 返すレスポンス返す形式合わせる
         if($params[0]['method'] == 'insertMark') {
             $stmt = $db->prepare("insert into mark_list (width, height) value (:width, :height)");
             $stmt->bindValue(':width', /*$postTest->width*/$params[0]['width'], PDO::PARAM_INT);
@@ -147,15 +92,10 @@ try{
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
             // var_dump($result);
 
-            header("HTTP/1.1 200 OK");
-            header("Content-Type: application/json; charset=utf-8");
-            echo json_encode($result, JSON_UNESCAPED_UNICODE);
-
             return;
         }
 
         // insertComment (送られてきたjsonのmethodの値がinsertCommentだった場合)
-        // TODO: 返すレスポンス返す形式合わせる
         if($params[0]['method'] == 'insertComment') {
             $stmt = $db->prepare("insert into irritation_history (mark_id, comment, anger_point) value (:mark_id, :comment, :anger_point)");
             $stmt->bindValue(':mark_id', $params[0]['mark_id'], PDO::PARAM_INT);
@@ -166,15 +106,10 @@ try{
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
             // var_dump($result);
 
-            header("HTTP/1.1 200 OK");
-            header("Content-Type: application/json; charset=utf-8");
-            echo json_encode($result, JSON_UNESCAPED_UNICODE);
-
             return;
         }
 
         // updateMark (送られてきたjsonのmethodの値がupdateMarkだった場合)
-        // TODO: 返すレスポンス返す形式合わせる
         if($params[0]['method'] == 'updateMark') {
             $stmt = $db->prepare("update mark_list set width = :width, height = :height, total_anger_point = :total_anger_point, burst_flag = :burst_flag where id = :id");
             $stmt->bindValue(':width', $params[0]['width'], PDO::PARAM_INT);
@@ -186,10 +121,6 @@ try{
 
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
             // var_dump($result);
-
-            header("HTTP/1.1 200 OK");
-            header("Content-Type: application/json; charset=utf-8");
-            echo json_encode($result, JSON_UNESCAPED_UNICODE);
 
             return;
         }
@@ -207,6 +138,12 @@ try{
 
         //     return;
         // }
+
+        // 存在しないメソッド名が送られてきた時
+        header("HTTP/1.1 400 Bad Request");
+        header("Content-Type: application/json; charset=utf-8");
+        $result = array('code'=>400, 'message'=>'リクエストデータの形式が正しくありません');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
 
         $db = null;
     } catch (PDOException $e) {
