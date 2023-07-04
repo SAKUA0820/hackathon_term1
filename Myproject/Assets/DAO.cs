@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.Networking;
 using LitJson;
 using System;
+using System.Runtime.Serialization.Json;
+
 
 public class DAO : MonoBehaviour
 {
@@ -21,35 +23,46 @@ public class DAO : MonoBehaviour
     * データを取得.
     */
     IEnumerator LoadData() {
-        Dictionary<string, string> dic = new Dictionary<string, string>();
+        Debug.Log("[Method] SaveData");
 
-        dic.Add("height", "500");
-        dic.Add("width", "500");
+        // MarkData取得
+        UnityWebRequest request4MarkData = new UnityWebRequest(serverAddress);
+        yield return request4MarkData.SendWebRequest();
+        if(request4MarkData.result == UnityWebRequest.Result.ProtocolError) {
+            // レスポンスコードを見て処理
+            Debug.Log($"[Error] Failed to load MarkData. Response Code : "+request4MarkData.responseCode);
+        }
+        else if (request4MarkData.result == UnityWebRequest.Result.ConnectionError) {
+            // エラーメッセージを見て処理
+            Debug.Log($"[Error] Failed to load MarkData. Message : "+request4MarkData.error);
+        }
+        else{
+            Debug.Log($"[Success] MarkData has been loaded successfully");
+            string downloadHandler = request4MarkData.downloadHandler.text;
+            Debug.Log(downloadHandler);
+            MarkData markData = JsonUtility.FromJson<MarkData>(downloadHandler);
+            Debug.Log(markData.id);
+        }
 
-        StartCoroutine(GetData(serverAddress, dic));
+        // AngerData取得
+        UnityWebRequest request4AngerData = new UnityWebRequest(serverAddress);
+        yield return request4AngerData.SendWebRequest();
+        if(request4AngerData.result == UnityWebRequest.Result.ProtocolError) {
+            // レスポンスコードを見て処理
+            Debug.Log($"[Error] Failed to load AngerData. Response Code : "+request4AngerData.responseCode);
+        }
+        else if (request4AngerData.result == UnityWebRequest.Result.ConnectionError) {
+            // エラーメッセージを見て処理
+            Debug.Log($"[Error] Failed to load AngerData. Message : "+request4AngerData.error);
+        }
+        else{
+            Debug.Log($"[Success] AngerData has been loaded successfully");
+            string downloadHandler = request4AngerData.downloadHandler.text;
+            Debug.Log(downloadHandler);
+            AngerData angerData = JsonUtility.FromJson<AngerData>(downloadHandler);
+            Debug.Log(angerData.id);
+        }
 
-        yield return 0;
-    }
-
-    private IEnumerator GetData(string url, Dictionary<string, string> data) {
-        // WWWForm form = new WWWForm();
-        // foreach (KeyValuePair<string, string> datum in data) {
-        //     form.AddField(datum.Key, datum.Value);
-        // }
-        // UnityWebRequest request = new UnityWebRequest(url, JsonSerializer.Serialize(data));
-
-    //     yield return StartCoroutine(CheckTimeOut(www, 3f)); //TimeOutSecond = 3s;
-
-    //     if (www.error != null) {
-    //         //そもそも接続ができていないとき
-    //         Debug.Log("HttpPost NG: " + www.error);
-
-    //     } else if (www.isDone) {
-    //         //送られてきたデータをテキストに反映
-    //         //ResultText_.GetComponent<Text>().text = www.text;
-    //         // 送られたデータをもとにキャラクターのサイズを決定
-    //     }
-        yield return 0;
     }
 
     /**
@@ -57,6 +70,9 @@ public class DAO : MonoBehaviour
     */
     IEnumerator SaveData() {
         Debug.Log("[Method] SaveData");
+        // セーブ前に最新情報を取得する.
+        // StartCoroutine ( LoadData() );
+
         MarkData markData = new MarkData ();
         markData.id = 1;
         markData.width = 30;  // ボタン押下時のマーク君のサイズを取得するように変更する
