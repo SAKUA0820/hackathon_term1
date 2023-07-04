@@ -8,7 +8,7 @@ using System;
 public class DAO : MonoBehaviour
 {
     // サーバアドレスを指定
-    public string serverAddress = "http://localhost/data.php"; // 要変更
+    public string serverAddress = "http://localhost:8080/server.php"; // 要変更
 
     void Start() {
         // StartCoroutine ( LoadData() );
@@ -56,20 +56,21 @@ public class DAO : MonoBehaviour
     * データを保存.
     */
     IEnumerator SaveData() {
+        Debug.Log("[Method] SaveData");
         MarkData markData = new MarkData ();
         markData.id = 1;
         markData.width = 30;  // ボタン押下時のマーク君のサイズを取得するように変更する
         markData.height = 30; // 同上
         markData.anger_point = 5;
         markData.burst_flag = false;
-        SendJsonData(markData);
+        StartCoroutine(SendJsonData(markData));
 
         AngerData angerData = new AngerData();
         angerData.id = 1;
         angerData.mark_table_id = 1;
         angerData.comment = "残業してもタスクが終わらなくてイライラいする！！！";
         angerData.anger_point = 2;
-        SendJsonData(angerData);
+        StartCoroutine(SendJsonData(angerData));
 
         yield return 0;
 
@@ -78,21 +79,22 @@ public class DAO : MonoBehaviour
     /**
     * JSON形式でデータをPHPに送る.
     */
-    public void SendJsonData<T>(T data) {
+    IEnumerator SendJsonData<T>(T data) {
+        Debug.Log("[Method] SendJsonData");
         UnityWebRequest request = new UnityWebRequest(serverAddress, JsonMapper.ToJson(data));
         // request.timeout = 1;
+        yield return request.SendWebRequest();
         string dataName = data.GetType().Name;
         if(request.result == UnityWebRequest.Result.ProtocolError) {
             // レスポンスコードを見て処理
-            Debug.Log($"[Error] Failed to send "+dataName+". Response Code : {request.responseCode}");
+            Debug.Log($"[Error] Failed to send "+dataName+". Response Code : "+request.responseCode);
         }
         else if (request.result == UnityWebRequest.Result.ConnectionError) {
             // エラーメッセージを見て処理
-            Debug.Log($"[Error] Failed to send "+dataName+". Message : {request.error}");
+            Debug.Log($"[Error] Failed to send "+dataName+". Message : "+request.error);
         }
         else{
-            // データ送信処理実行
-            Debug.Log($"[Progress] Sending "+dataName+"...");
+            Debug.Log($"[Success] "+dataName+ "has been sent successfully");
         }
     }
 }
