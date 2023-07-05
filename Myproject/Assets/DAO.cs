@@ -10,7 +10,7 @@ using System.Runtime.Serialization.Json;
 public class DAO : MonoBehaviour
 {
     // サーバアドレスを指定
-    public string serverAddress = "http://localhost:8080/server.php"; // 要変更
+    // public string serverAddress = "http://localhost:8080/server.php"; // 要変更
 
     void Start() {
         // StartCoroutine ( LoadData() );
@@ -26,7 +26,7 @@ public class DAO : MonoBehaviour
         Debug.Log("[Method] SaveData");
 
         // MarkData取得
-        UnityWebRequest request4MarkData = new UnityWebRequest(serverAddress);
+        UnityWebRequest request4MarkData = new UnityWebRequest("http://localhost:8080/server.php");
         yield return request4MarkData.SendWebRequest();
         if(request4MarkData.result == UnityWebRequest.Result.ProtocolError) {
             // レスポンスコードを見て処理
@@ -45,7 +45,7 @@ public class DAO : MonoBehaviour
         }
 
         // AngerData取得
-        UnityWebRequest request4AngerData = new UnityWebRequest(serverAddress);
+        UnityWebRequest request4AngerData = new UnityWebRequest("http://localhost:8080/server.php");
         yield return request4AngerData.SendWebRequest();
         if(request4AngerData.result == UnityWebRequest.Result.ProtocolError) {
             // レスポンスコードを見て処理
@@ -97,7 +97,7 @@ public class DAO : MonoBehaviour
     */
     IEnumerator SendJsonData<T>(T data) {
         Debug.Log("[Method] SendJsonData");
-        UnityWebRequest request = new UnityWebRequest(serverAddress, JsonMapper.ToJson(data));
+        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php", JsonMapper.ToJson(data));
         // request.timeout = 1;
         yield return request.SendWebRequest();
         string dataName = data.GetType().Name;
