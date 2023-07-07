@@ -6,16 +6,20 @@ using LitJson;
 using System;
 using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Linq;
 
 
 public class DAO : MonoBehaviour
 {
-    // サーバアドレスを指定
-    // public string serverAddress = "http://localhost:8080/server.php"; // 要変更
 
     void Start() {
-        // StartCoroutine ( LoadData() );
-        StartCoroutine ( SaveData() );  // テスト用でSaveDataメソッドを呼び出す
+        StartCoroutine ( LoadData() );
+         StartCoroutine ( SaveData() );  // テスト用でSaveDataメソッドを呼び出す
+         StartCoroutine ( BurstMark() );
+        // TODO : ①ボタンを押したらSaveDataメソッドを呼び出す
+        //        ②バーストポイントが規定以上になったらBurstMarkメソッドを呼び出す
+        //        ③引数ありメソッドで与える引数が固定値になっているので画面や入力値を入れる
+        //        ④DBから取得したデータをもとにマークくんを描画する
     }
 
     // ボタン押下でSaveするようにする
@@ -24,47 +28,12 @@ public class DAO : MonoBehaviour
     * データを取得.
     */
     IEnumerator LoadData() { 
-        Debug.Log("[Method] SaveData");
+        Debug.Log("[Method] LoadData");
 
-        // MarkData取得
-        UnityWebRequest request4MarkData = new UnityWebRequest("http://localhost:8080/server.php?method=selectAllMark");
-        request4MarkData.downloadHandler = new DownloadHandlerBuffer();
-        yield return request4MarkData.SendWebRequest();
-        if(request4MarkData.result == UnityWebRequest.Result.ProtocolError) {
-            // レスポンスコードを見て処理
-            Debug.Log($"[Error] Failed to load MarkData. Response Code : "+request4MarkData.responseCode);
-        }
-        else if (request4MarkData.result == UnityWebRequest.Result.ConnectionError) {
-            // エラーメッセージを見て処理
-            Debug.Log($"[Error] Failed to load MarkData. Message : "+request4MarkData.error);
-        }
-        else{
-            Debug.Log($"[Success] MarkData has been loaded successfully");
-            string downloadHandler = request4MarkData.downloadHandler.text;
-            Debug.Log(downloadHandler);
-            MarkData markData = JsonUtility.FromJson<MarkData>(downloadHandler);
-            // Debug.Log(markData.id);
-        }
-
-        // AngerData取得
-        // UnityWebRequest request4AngerData = new UnityWebRequest("http://126.189.131.108:8080/server.php");
-        // yield return request4AngerData.SendWebRequest();
-        // if(request4AngerData.result == UnityWebRequest.Result.ProtocolError) {
-        //     // レスポンスコードを見て処理
-        //     Debug.Log($"[Error] Failed to load AngerData. Response Code : "+request4AngerData.responseCode);
-        // }
-        // else if (request4AngerData.result == UnityWebRequest.Result.ConnectionError) {
-        //     // エラーメッセージを見て処理
-        //     Debug.Log($"[Error] Failed to load AngerData. Message : "+request4AngerData.error);
-        // }
-        // else{
-        //     Debug.Log($"[Success] AngerData has been loaded successfully");
-        //     string downloadHandler = request4AngerData.downloadHandler.text;
-        //     Debug.Log(downloadHandler);
-        //     AngerData angerData = JsonUtility.FromJson<AngerData>(downloadHandler);
-        //     Debug.Log(angerData.id);
-        // }
-
+        // selectAllMark
+        IEnumerator executeAllMarkData = selectAllMark();
+        yield return StartCoroutine(executeAllMarkData);
+        MarkData[] allMarkData = (MarkData[])executeAllMarkData.Current;
     }
 
     /**
@@ -73,69 +42,168 @@ public class DAO : MonoBehaviour
     IEnumerator SaveData() {
         Debug.Log("[Method] SaveData");
         // セーブ前に最新情報を取得する.
-        // StartCoroutine ( LoadData() );
+        // selectMark
+        IEnumerator executeMarkData = selectMark(1);    // 引数にはidを渡す
+        yield return StartCoroutine(executeMarkData);
+        MarkData markData = (MarkData)executeMarkData.Current;
 
-        MarkData markData = new MarkData ();
-        markData.method = "insertMark";
-        // markData.id = 1;
-        markData.width = 30;  // ボタン押下時のマーク君のサイズを取得するように変更する
-        markData.height = 30; // 同上
-        // markData.anger_point = 5;
-        // markData.burst_flag = false;
-        // StartCoroutine(SendJsonData(markData));
-        /* ↓GETで送るテスト用↓ */
-        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php?method=insertMark&width=40&height=50");
-        yield return request.SendWebRequest();
-        if(request.result == UnityWebRequest.Result.ProtocolError) {
-            // レスポンスコードを見て処理
-            Debug.Log($"[Error] Failed to send MarkData. Response Code : "+request.responseCode);
-        }
-        else if (request.result == UnityWebRequest.Result.ConnectionError) {
-            // エラーメッセージを見て処理
-            Debug.Log($"[Error] Failed to send MarkData. Message : "+request.error);
-        }
-        else{
-            Debug.Log($"[Success] MarkData has been sent successfully");
-            Debug.Log("レスポンス："+request.downloadHandler.text);
-        }
-        /* ↑GETで送るテスト用↑ */
+        // データ更新・セーブ
+        // insertComment
+        StartCoroutine(insertComment(1, "残業やだ！", 3));             // 引数にはmark_id, comment, anger_pointを渡す
 
-        AngerData angerData = new AngerData();
-        angerData.id = 1;
-        angerData.mark_table_id = 1;
-        angerData.comment = "残業してもタスクが終わらなくてイライラいする！！！";
-        angerData.anger_point = 2;
-        // StartCoroutine(SendJsonData(angerData));
-
-        yield return 0;
-
+        // updateMark
+        StartCoroutine(updateMark(1, 70, 70, 6, false));             // 引数にはid, width, height, total_anger_point, burst_flagを渡す     
     }
-    
+
     /**
-    * JSON形式でデータをPHPに送る.
+    * マークくんを爆発させる.
     */
-    IEnumerator SendJsonData<T>(T data) {
-        Debug.Log("[Method] SendJsonData");
-        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php", "POST");
-        var jsonData = JsonMapper.ToJson(data);
-        request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(jsonData));
+    IEnumerator BurstMark() {
+        Debug.Log("[Method] BurstMark");
+        // selectAllComment
+        IEnumerator executeSelectAllComment = selectAllComment();
+        yield return StartCoroutine(executeSelectAllComment);
+        AngerData[] allComment = (AngerData[])executeSelectAllComment.Current;
+
+        // 新しいマークくんを追加.
+        // insertMark
+        StartCoroutine(insertMark(50, 50));             // 引数にはwidthとheightを渡す
+    }
+
+    /**
+    * マークくん全取得.
+    */
+    IEnumerator selectAllMark() {
+        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php?method=selectAllMark");
         request.downloadHandler = new DownloadHandlerBuffer();
-        Debug.Log(jsonData);
-        Debug.Log(Encoding.UTF8.GetBytes(jsonData));
-        request.SetRequestHeader("Content-Type", "application/json");
         yield return request.SendWebRequest();
-        string dataName = data.GetType().Name;
         if(request.result == UnityWebRequest.Result.ProtocolError) {
             // レスポンスコードを見て処理
-            Debug.Log($"[Error] Failed to send "+dataName+". Response Code : "+request.responseCode);
+            Debug.Log($"[Error] Failed to execute [selectAllMark]. Response Code : "+request.responseCode);
         }
         else if (request.result == UnityWebRequest.Result.ConnectionError) {
             // エラーメッセージを見て処理
-            Debug.Log($"[Error] Failed to send "+dataName+". Message : "+request.error);
+            Debug.Log($"[Error] Failed to execute [selectAllMark]. Message : "+request.error);
         }
         else{
-            Debug.Log($"[Success] "+dataName+ "has been sent successfully");
-            Debug.Log("レスポンス："+request.downloadHandler.text);
+            Debug.Log($"[Success] Succeeded to execute [selectAllMark]!!!");
+            string downloadHandler = request.downloadHandler.text;
+
+            // JSON配列 → C#配列への変換
+            MarkData[] markData= JsonHelper.FromJson<MarkData>(downloadHandler);
+            yield return markData;
+        }
+    }
+
+    /**
+    * 特定のマークくん情報取得.
+    */
+    IEnumerator selectMark(int id) {
+        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php?method=selectMark&id="+id);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        yield return request.SendWebRequest();
+        if(request.result == UnityWebRequest.Result.ProtocolError) {
+            // レスポンスコードを見て処理
+            Debug.Log($"[Error] Failed to execute [selectMark] with id = "+id+". Response Code : "+request.responseCode);
+        }
+        else if (request.result == UnityWebRequest.Result.ConnectionError) {
+            // エラーメッセージを見て処理
+            Debug.Log($"[Error] Failed to execute [selectMark] with id = "+id+". Message : "+request.error);
+        }
+        else{
+            Debug.Log($"[Success] Succeeded to execute [selectMark] with id = "+id+"!!!");
+            string downloadHandler = request.downloadHandler.text;
+
+            MarkData markData = JsonUtility.FromJson<MarkData>(downloadHandler);
+            yield return markData;
+        }
+    }
+
+    /**
+    * コメント全取得.
+    */
+    IEnumerator selectAllComment() {
+        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php?method=selectAllComment");
+        request.downloadHandler = new DownloadHandlerBuffer();
+        yield return request.SendWebRequest();
+        if(request.result == UnityWebRequest.Result.ProtocolError) {
+            // レスポンスコードを見て処理
+            Debug.Log($"[Error] Failed to execute [selectAllComment]. Response Code : "+request.responseCode);
+        }
+        else if (request.result == UnityWebRequest.Result.ConnectionError) {
+            // エラーメッセージを見て処理
+            Debug.Log($"[Error] Failed to execute [selectAllComment]. Message : "+request.error);
+        }
+        else{
+            Debug.Log($"[Success] Succeeded to execute [selectAllComment]!!!");
+            string downloadHandler = request.downloadHandler.text;
+
+            // JSON配列 → C#配列への変換
+            AngerData[] angerData= JsonHelper.FromJson<AngerData>(downloadHandler);
+            yield return angerData;
+        }
+    }
+
+    /**
+    * マークくん追加.
+    */
+    IEnumerator insertMark(int width, int height) {
+        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php?method=insertMark&width="+width+"&height="+height);
+        yield return request.SendWebRequest();
+        if(request.result == UnityWebRequest.Result.ProtocolError) {
+            // レスポンスコードを見て処理
+            Debug.Log($"[Error] Failed to execute [insertMark] with (width, height) = ("+width+", "+height+"). Response Code : "+request.responseCode);
+        }
+        else if (request.result == UnityWebRequest.Result.ConnectionError) {
+            // エラーメッセージを見て処理
+            Debug.Log($"[Error] Failed to execute [insertMark] with (width, height) = ("+width+", "+height+"). Message : "+request.error);
+        }
+        else{
+            Debug.Log($"[Success] Succeeded to execute [insertMark] with (width, height) = ("+width+", "+height+")!!!");
+
+            yield return 0;
+        }
+    }
+
+    /**
+    * コメント追加.
+    */
+    IEnumerator insertComment(int mark_id, string comment, int anger_point) {
+        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php?method=insertComment&mark_id="+mark_id+"&comment="+comment+"&anger_point="+anger_point);
+        yield return request.SendWebRequest();
+        if(request.result == UnityWebRequest.Result.ProtocolError) {
+            // レスポンスコードを見て処理
+            Debug.Log($"[Error] Failed to execute [insertComment] with mark_id = "+mark_id+". Response Code : "+request.responseCode);
+        }
+        else if (request.result == UnityWebRequest.Result.ConnectionError) {
+            // エラーメッセージを見て処理
+            Debug.Log($"[Error] Failed to execute [insertComment] with mark_id = "+mark_id+". Message : "+request.error);
+        }
+        else{
+            Debug.Log($"[Success] Succeeded to execute [insertComment] with mark_id = "+mark_id+"!!!");
+
+            yield return 0;
+        }
+    }
+
+    /**
+    * マークくん更新.
+    */
+    IEnumerator updateMark(int id, int width, int height, int total_anger_point, bool burst_flag) {
+        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php?method=updateMark&width="+width+"&height="+height+"&total_anger_point="+total_anger_point+"&burst_flag="+burst_flag);
+        yield return request.SendWebRequest();
+        if(request.result == UnityWebRequest.Result.ProtocolError) {
+            // レスポンスコードを見て処理
+            Debug.Log($"[Error] Failed to execute [updateMark] with id = "+id+". Response Code : "+request.responseCode);
+        }
+        else if (request.result == UnityWebRequest.Result.ConnectionError) {
+            // エラーメッセージを見て処理
+            Debug.Log($"[Error] Failed to execute [updateMark] with id = "+id+". Message : "+request.error);
+        }
+        else{
+            Debug.Log($"[Success] Succeeded to execute [updateMark] with id = "+id+"!!!");
+
+            yield return 0;
         }
     }
 }
@@ -166,4 +234,52 @@ public class AngerData
     public int mark_table_id;
     public string comment;
     public int anger_point;
+}
+
+/**
+* JSON配列→C#配列への変換
+*/
+public static class JsonHelper
+{
+    // 指定したstringをRootオブジェクトを持たないJSON配列と仮定してデシリアライズ
+    public static T[] FromJson<T>(string json)
+    {
+        // ルート要素があれば変換できるので
+        // 入力されたJSONに対して(★)の行を追加する
+        //
+        // e.g.
+        // ★ {
+        // ★     "array":
+        //        [
+        //            ...
+        //        ]
+        // ★ }
+        //
+        string dummy_json = $"{{\"{DummyNode<T>.ROOT_NAME}\": {json}}}";
+
+        // ダミーのルートにデシリアライズしてから中身の配列を返す
+        var obj = JsonUtility.FromJson<DummyNode<T>>(dummy_json);
+        return obj.array;
+    }
+
+    // // 指定した配列やリストなどのコレクションをRootオブジェクトを持たないJSON配列に変換
+    // public static string ToJson<T>(IEnumerable<T> collection)
+    // {
+    //     string json = JsonUtility.ToJson(new DummyNode<T>(collection)); // ダミールートごとシリアル化する
+    //     int start = DummyNode<T>.ROOT_NAME.Length + 4;
+    //     int len = json.Length - start - 1;
+    //     return json.Substring(start, len); // 追加ルートの文字を取り除いて返す
+    // }
+
+    // 内部で使用するダミーのルート要素
+    [Serializable]
+    private struct DummyNode<T>
+    {
+        // JSONに付与するダミールートの名称
+        public const string ROOT_NAME = nameof(array);
+        // 疑似的な子要素
+        public T[] array;
+        // コレクション要素を指定してオブジェクトを作成する
+        public DummyNode(IEnumerable<T> collection) => this.array = collection.ToArray();
+    }
 }
