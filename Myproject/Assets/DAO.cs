@@ -14,8 +14,8 @@ public class DAO : MonoBehaviour
 
     void Start() {
         StartCoroutine ( LoadData() );
-         StartCoroutine ( SaveData() );  // テスト用でSaveDataメソッドを呼び出す
-         StartCoroutine ( BurstMark() );
+        StartCoroutine ( SaveData() );  // テスト用でSaveDataメソッドを呼び出す
+        StartCoroutine ( BurstMark() );
         // TODO : ①ボタンを押したらSaveDataメソッドを呼び出す
         //        ②バーストポイントが規定以上になったらBurstMarkメソッドを呼び出す
         //        ③引数ありメソッドで与える引数が固定値になっているので画面や入力値を入れる
@@ -52,7 +52,7 @@ public class DAO : MonoBehaviour
         StartCoroutine(insertComment(1, "残業やだ！", 3));             // 引数にはmark_id, comment, anger_pointを渡す
 
         // updateMark
-        StartCoroutine(updateMark(1, 70, 70, 6, false));             // 引数にはid, width, height, total_anger_point, burst_flagを渡す     
+        StartCoroutine(updateMark(1, 70, 70, 6, 0));             // 引数にはid, width, height, total_anger_point, burst_flagを渡す     
     }
 
     /**
@@ -189,8 +189,8 @@ public class DAO : MonoBehaviour
     /**
     * マークくん更新.
     */
-    IEnumerator updateMark(int id, int width, int height, int total_anger_point, bool burst_flag) {
-        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php?method=updateMark&width="+width+"&height="+height+"&total_anger_point="+total_anger_point+"&burst_flag="+burst_flag);
+    IEnumerator updateMark(int id, int width, int height, int total_anger_point, int burst_flag) {
+        UnityWebRequest request = new UnityWebRequest("http://localhost:8080/server.php?method=updateMark&id="+id+"&width="+width+"&height="+height+"&total_anger_point="+total_anger_point+"&burst_flag="+burst_flag);
         yield return request.SendWebRequest();
         if(request.result == UnityWebRequest.Result.ProtocolError) {
             // レスポンスコードを見て処理
@@ -217,7 +217,7 @@ public class MarkData
     public int width;
     public int height;
     public int anger_point;
-    public bool burst_flag;
+    public int burst_flag;
 }
 
 [Serializable]
